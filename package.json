@@ -1,0 +1,58 @@
+{
+  "name": "nestjs-async-config",
+  "version": "0.0.1",
+  "description": "The async config module based on RESTful API, you can real time update your system config",
+  "author": "Terence.Sun",
+  "license": "MIT",
+  "directories": {
+    "lib": "src"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json"
+  },
+  "keywords": [
+    "nestjs",
+    "config",
+    "environment",
+    "async",
+    "RESTful",
+    "module",
+    "update config",
+    "real time update",
+    "real time"
+  ],
+  "dependencies": {
+    "@types/yaml": "^1.2.0",
+    "ioredis": "^4.14.1",
+    "mongoose": "^5.7.12",
+    "nestjs-validate": "^0.5.5",
+    "redis": "^2.8.0",
+    "yaml": "^1.7.2"
+  },
+  "devDependencies": {
+    "@nestjs/common": "^6.0.0",
+    "@nestjs/testing": "^6.0.0",
+    "nodemon": "^1.18.9",
+    "prettier": "^1.15.3",
+    "supertest": "^3.4.1",
+    "ts-jest": "24.0.2",
+    "ts-node": "8.1.0",
+    "tsconfig-paths": "3.8.0",
+    "tslint": "5.16.0",
+    "typescript": "3.4.3"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".spec.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
+  }
+}

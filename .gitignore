@@ -1,0 +1,10 @@
+coverage
+dist
+logs
+node_modules
+package-lock.json
+.DS_Store
+.idea
+./k8s-secret.yaml
+values.test.yaml
+.vscode/
