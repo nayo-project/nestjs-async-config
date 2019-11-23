@@ -1,6 +1,6 @@
 {
   "name": "nestjs-async-config",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "The async config module based on RESTful API, you can real time update your system config",
   "author": "Terence.Sun",
   "main": "dist/index.js",

@@ -70,6 +70,7 @@ export class AsyncConfigBus {
                 }
                 resolve();
             }).catch(e => {
+                // tslint:disable-next-line:no-console
                 console.error(e);
                 reject(e);
             });
@@ -101,7 +102,8 @@ export class AsyncConfigBus {
 
     static initMongodb(client, initConfig) {
         return new Promise(async (resolve, reject) => {
-            const configInfo = await client.connection.collection('async_config').findOne({flag: 'async_config'});
+            // tslint:disable-next-line:max-line-length
+            const configInfo = await client.connection.collection(AsyncConfigBus.moduleConfig.store.collection).findOne({flag: AsyncConfigBus.moduleConfig.store.flag});
             if (configInfo) {
                 // set memory config
                 const updateContent = stringify(configInfo.config);
@@ -110,8 +112,8 @@ export class AsyncConfigBus {
                 resolve(true);
             } else {
                 // init config
-                await client.connection.collection('async_config').insertOne({
-                    flag: 'async_config',
+                await client.connection.collection(AsyncConfigBus.moduleConfig.store.collection).insertOne({
+                    flag: AsyncConfigBus.moduleConfig.store.flag,
                     config: initConfig,
                 });
                 AsyncConfigBus.state = initConfig;
@@ -154,7 +156,8 @@ export class AsyncConfigBus {
         return new Promise(async (resolve, reject) => {
             if (doc) {
                 const updateData: any = {...AsyncConfigBus.state, ...doc};
-                const configInfo = await client.connection.collection('async_config').findOneAndUpdate({flag: 'async_config'}, { $set: { config: updateData } });
+                // tslint:disable-next-line:max-line-length
+                const configInfo = await client.connection.collection(AsyncConfigBus.moduleConfig.store.collection).findOneAndUpdate({flag: AsyncConfigBus.moduleConfig.store.flag}, { $set: { config: updateData } });
                 AsyncConfigBus.updateFile(stringify(updateData));
                 AsyncConfigBus.state = updateData;
                 resolve(AsyncConfigBus.state);

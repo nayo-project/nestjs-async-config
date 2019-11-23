@@ -27,7 +27,16 @@ store:
     xx: yy  # all redis or mongodb connection options can write here
     
 # if type is mongodb, you should point the database, and ensure that the mongodb account can create collection, the module will create a collection called async_config in the pointed database 
+# here are all store params below
 ```
+Param Name | Default | Details
+---| ---- |---
+type | local | your store type, suport for local memory/redis/mongodb
+uri | - | when the type is redis/mongodb, here will be writed necessarily
+collection | async_config | when the type is mongodb, you can point the collection to store your config, however, you should point the database via uri firstly. This param is not support other type excepted mongodb
+flag | async_config | when the type is mongodb, yon can point a special config document of the same collection, so, you can manage your config env through one database, one collection. This param is not support other type excepted mongodb
+options | {} | this is an object for redis/mongodb, this one allow you can set the redis/mongodb options here, like keyPrefix/connectionPool etc.
+
 
 - write your system local config file .env
 
