@@ -1,12 +1,21 @@
 {
   "name": "nestjs-async-config",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "The async config module based on RESTful API, you can real time update your system config",
   "author": "Terence.Sun",
+  "main": "dist/index.js",
   "license": "MIT",
   "directories": {
     "lib": "src"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nayo-project/nestjs-async-config.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nayo-project/nestjs-async-config/issues"
+  },
+  "homepage": "https://github.com/nayo-project/nestjs-async-config#readme",
   "scripts": {
     "build": "tsc -p tsconfig.build.json"
   },
