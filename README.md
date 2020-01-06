@@ -16,7 +16,9 @@ the async-config allow you to controll your system config in real time via RESTf
 
 - set the nestjs-async-config module
 
-you should write a setting.yml file in the project root folder, the same level of the node_modules folder
+you should write a setting.yml file in the project root folder, the same level of the node_modules folder, or you can set the env params of the system (process.ENV)
+
+if you don't have the setting.yml, async-config-module will read process.ENV
 
 ```
 # the config of setting.yml, and you should not to change the config when your system is running
@@ -29,13 +31,13 @@ store:
 # if type is mongodb, you should point the database, and ensure that the mongodb account can create collection, the module will create a collection called async_config in the pointed database 
 # here are all store params below
 ```
-Param Name | Default | Details
----| ---- |---
-type | local | your store type, suport for local memory/redis/mongodb
-uri | - | when the type is redis/mongodb, here will be writed necessarily
-collection | async_config | when the type is mongodb, you can point the collection to store your config, however, you should point the database via uri firstly. This param is not support other type excepted mongodb
-flag | async_config | when the type is mongodb, yon can point a special config document of the same collection, so, you can manage your config env through one database, one collection. This param is not support other type excepted mongodb
-options | {} | this is an object for redis/mongodb, this one allow you can set the redis/mongodb options here, like keyPrefix/connectionPool etc.
+Param Name | ENV Name | Default | Details
+---| ---- |--- | ---
+type | ASYNC_CONFIG_TYPE | local | your store type, suport for local memory/redis/mongodb
+uri | ASYNC_CONFIG_URI | - | when the type is redis/mongodb, here will be writed necessarily
+collection | ASYNC_CONFIG_COLLECTION | async_config | when the type is mongodb, you can point the collection to store your config, however, you should point the database via uri firstly. This param is not support other type excepted mongodb
+flag | ASYNC_CONFIG_FLAG | async_config | when the type is mongodb, yon can point a special config document of the same collection, so, you can manage your config env through one database, one collection. This param is not support other type excepted mongodb
+options | ASYNC_CONFIG_OPTIONS | {} | this is an object for redis/mongodb, this one allow you can set the redis/mongodb options here, like keyPrefix/connectionPool etc.
 
 
 - write your system local config file .env

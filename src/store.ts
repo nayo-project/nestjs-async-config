@@ -4,13 +4,13 @@ import * as redis from 'ioredis';
 
 export const chooseStoreConnection = (config: Setting | any) => {
     switch (config.store.type) {
-        case "local":
+        case 'local':
             return localConnection;
             break;
-        case "redis":
+        case 'redis':
             return redisConnection(config);
             break;
-        case "mongodb":
+        case 'mongodb':
             return mongodbConnection(config);
             break;
         default:

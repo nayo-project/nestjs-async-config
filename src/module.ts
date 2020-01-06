@@ -2,7 +2,7 @@ import { Module, Global } from '@nestjs/common';
 import { AsyncConfigService } from './service/async.config.service';
 import { AsyncConfigController } from './service';
 import { AsyncConfigBus } from './bus';
-import { Config } from './service/async.config.out'
+import { Config } from './service/async.config.out';
 import { ValidateModule } from 'nestjs-validate';
 import {
     updateConfigValidateSchema,

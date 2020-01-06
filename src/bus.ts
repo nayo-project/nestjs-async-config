@@ -1,8 +1,9 @@
-import {Injectable} from '@nestjs/common';
+import {Injectable, Logger} from '@nestjs/common';
 import {readFileSync, readdirSync, writeFileSync, existsSync} from 'fs';
 import {resolve as pathResolve} from 'path';
 import {parse, stringify} from 'yaml';
 import {DEFAULT} from './default';
+import {Setting} from './interface';
 import {chooseStoreConnection} from './store';
 
 @Injectable()
@@ -36,7 +37,7 @@ export class AsyncConfigBus {
     static async init(): Promise<void> {
         return new Promise((resolve, reject) => {
             // get the module config
-            const moduleConfigFromYml = parse(readFileSync(pathResolve(__dirname, AsyncConfigBus.settingFilePath), 'utf8'));
+            const moduleConfigFromYml = AsyncConfigBus.getConfigSetting();
             AsyncConfigBus.moduleConfig = DEFAULT.DEFAULTSETTING(moduleConfigFromYml);
             const rootFiles = [];
             const rootEnvFiles = [];
@@ -75,6 +76,28 @@ export class AsyncConfigBus {
                 reject(e);
             });
         });
+    }
+
+    static getConfigSetting() {
+        if (existsSync(pathResolve(__dirname, AsyncConfigBus.settingFilePath))) {
+            return parse(readFileSync(pathResolve(__dirname, AsyncConfigBus.settingFilePath), 'utf8'));
+        } else {
+            const configOfEnv: Setting = {
+                store: {
+                    // @ts-ignore
+                    type: process.env.ASYNC_CONFIG_TYPE,
+                    uri: process.env.ASYNC_CONFIG_URI,
+                    collection: process.env.ASYNC_CONFIG_COLLECTION,
+                    flag: process.env.ASYNC_CONFIG_FLAG,
+                },
+            };
+            try {
+                configOfEnv.store.options = JSON.parse(process.env.ASYNC_CONFIG_OPTIONS);
+            } catch (e) {
+                configOfEnv.store.options = {};
+            }
+            return configOfEnv;
+        }
     }
 
     static updateFile(doc) {
