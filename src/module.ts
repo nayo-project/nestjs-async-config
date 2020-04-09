@@ -14,9 +14,9 @@ import {
 @Module({
     imports: [
         ValidateModule.forFeature([
-            { path: '/config/update', schema: updateConfigValidateSchema },
-            { path: '/config/delete', schema: deleteConfigValidateSchema },
-            { path: '/config/find/:key', schema: getConfigValidateSchema },
+            { path: '/:prefix*/config/update', schema: updateConfigValidateSchema },
+            { path: '/:prefix*/config/delete', schema: deleteConfigValidateSchema },
+            { path: '/:prefix*/config/find/:key', schema: getConfigValidateSchema },
         ]),
     ],
     providers: [
