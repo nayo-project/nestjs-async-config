@@ -34,7 +34,7 @@ const redisConnection = (config: Setting): any => {
 
 const mongodbConnection = (config: Setting): any => {
     return mongoose.connect(config.store.uri, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
+        minPoolSize: 3,
+        maxPoolSize: 5,
     });
 };
