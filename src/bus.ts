@@ -5,6 +5,7 @@ import {parse, stringify} from 'yaml';
 import {DEFAULT} from './default';
 import {Setting} from './interface';
 import {chooseStoreConnection} from './store';
+import * as AppRootPath from 'app-root-path';
 
 @Injectable()
 export class AsyncConfigBus {
@@ -17,8 +18,8 @@ export class AsyncConfigBus {
         [propName: string]: any;
     } = {};
     static envFileReg = /^.env$/;
-    static settingFilePath = '../../../../setting.yml';
-    static envFilePath: string = '../../../../.env';
+    static settingFilePath: string = `${AppRootPath.path}/setting.yml`;
+    static envFilePath: string = `${AppRootPath.path}/.env`;
 
     /*
     * init process logic
@@ -35,47 +36,48 @@ export class AsyncConfigBus {
     * 7. completed
     * */
     static async init(): Promise<void> {
-        return new Promise((resolve, reject) => {
-            // get the module config
-            const moduleConfigFromYml = AsyncConfigBus.getConfigSetting();
-            AsyncConfigBus.moduleConfig = DEFAULT.DEFAULTSETTING(moduleConfigFromYml);
-            const rootFiles = [];
-            const rootEnvFiles = [];
-            if (existsSync(pathResolve(__dirname, AsyncConfigBus.envFilePath))) {
-                rootEnvFiles.push(AsyncConfigBus.envFilePath);
-            }
-            let initConfigContent = '';
-            let initConfig;
-            for (const configContent of rootEnvFiles) {
-                initConfigContent += readFileSync(pathResolve(__dirname, configContent), 'utf8');
-            }
-            initConfig = parse(initConfigContent);
-            if (initConfig == null) {
-                initConfig = {};
-            }
-            // get store connection
-            AsyncConfigBus.connectionStore = chooseStoreConnection(AsyncConfigBus.moduleConfig);
-            AsyncConfigBus.connectionStore.then(async client => {
-                switch (AsyncConfigBus.moduleConfig.store.type) {
-                    case 'local':
-                        await AsyncConfigBus.initLocal(client, initConfig);
-                        break;
-                    case 'redis':
-                        await AsyncConfigBus.initRedis(client, initConfig);
-                        break;
-                    case 'mongodb':
-                        await AsyncConfigBus.initMongodb(client, initConfig);
-                        break;
-                    default:
-                        throw new Error('config type is not found');
-                }
-                resolve();
-            }).catch(e => {
-                // tslint:disable-next-line:no-console
-                console.error(e);
-                reject(e);
-            });
-        });
+        // get the module config
+        const moduleConfigFromYml = AsyncConfigBus.getConfigSetting();
+        AsyncConfigBus.moduleConfig = DEFAULT.DEFAULTSETTING(moduleConfigFromYml);
+        const rootFiles = [];
+        const rootEnvFiles = [];
+        if (existsSync(pathResolve(__dirname, AsyncConfigBus.envFilePath))) {
+            rootEnvFiles.push(AsyncConfigBus.envFilePath);
+        }
+        let initConfigContent = '';
+        let initConfig;
+        for (const configContent of rootEnvFiles) {
+            initConfigContent += readFileSync(pathResolve(__dirname, configContent), 'utf8');
+        }
+        initConfig = parse(initConfigContent);
+        if (initConfig == null) {
+            initConfig = {};
+        }
+        // get store connection
+        const client = await chooseStoreConnection(AsyncConfigBus.moduleConfig);
+        AsyncConfigBus.connectionStore = client;
+        switch (AsyncConfigBus.moduleConfig.store.type) {
+            case 'local':
+                await AsyncConfigBus.initLocal(client, initConfig);
+                break;
+            case 'redis':
+                await AsyncConfigBus.initRedis(client, initConfig);
+                break;
+            case 'mongodb':
+                await AsyncConfigBus.initMongodb(client, initConfig);
+                break;
+            default:
+                throw new Error('config type is not found');
+        }
+    }
+
+    static async closeConn(): Promise<void> {
+        try {
+            await AsyncConfigBus.connectionStore.disconnect();
+        } catch (e) {
+            // tslint:disable-next-line:no-console
+            console.error(e);
+        }
     }
 
     static getConfigSetting() {
@@ -104,52 +106,41 @@ export class AsyncConfigBus {
         writeFileSync(pathResolve(__dirname, AsyncConfigBus.envFilePath), doc, { flag: 'w+' });
     }
 
-    static initRedis(client, initConfig) {
-        return new Promise(async (resolve, reject) => {
-            const prefix = client.options.keyPrefix;
-            const configInfo = await client.get(`${prefix}AsyncConfig`);
-            if (configInfo) {
-                // set memory config
-                const updateContent = stringify(JSON.parse(configInfo).config);
-                AsyncConfigBus.updateFile(updateContent);
-                AsyncConfigBus.state = JSON.parse(configInfo).config;
-                resolve(true);
-            } else {
-                // init config
-                client.set(`${prefix}AsyncConfig`, JSON.stringify({flag: 'async_config', config: initConfig}));
-                AsyncConfigBus.state = initConfig;
-                resolve(true);
-            }
-        });
-    }
-
-    static initMongodb(client, initConfig) {
-        return new Promise(async (resolve, reject) => {
-            // tslint:disable-next-line:max-line-length
-            const configInfo = await client.connection.collection(AsyncConfigBus.moduleConfig.store.collection).findOne({flag: AsyncConfigBus.moduleConfig.store.flag});
-            if (configInfo) {
-                // set memory config
-                const updateContent = stringify(configInfo.config);
-                AsyncConfigBus.updateFile(updateContent);
-                AsyncConfigBus.state = configInfo.config;
-                resolve(true);
-            } else {
-                // init config
-                await client.connection.collection(AsyncConfigBus.moduleConfig.store.collection).insertOne({
-                    flag: AsyncConfigBus.moduleConfig.store.flag,
-                    config: initConfig,
-                });
-                AsyncConfigBus.state = initConfig;
-                resolve(true);
-            }
-        });
-    }
-
-    static initLocal(client, initConfig) {
-        return new Promise((resolve, reject) => {
+    static async initRedis(client, initConfig) {
+        const prefix = client.options.keyPrefix;
+        const configInfo = await client.get(`${prefix}AsyncConfig`);
+        if (configInfo) {
+            // set memory config
+            const updateContent = stringify(JSON.parse(configInfo).config);
+            AsyncConfigBus.updateFile(updateContent);
+            AsyncConfigBus.state = JSON.parse(configInfo).config;
+        } else {
+            // init config
+            client.set(`${prefix}AsyncConfig`, JSON.stringify({flag: 'async_config', config: initConfig}));
             AsyncConfigBus.state = initConfig;
-            resolve(true);
-        });
+        }
+    }
+
+    static async initMongodb(client, initConfig) {
+        // tslint:disable-next-line:max-line-length
+        const configInfo = await client.connection.collection(AsyncConfigBus.moduleConfig.store.collection).findOne({flag: AsyncConfigBus.moduleConfig.store.flag});
+        if (configInfo) {
+            // set memory config
+            const updateContent = stringify(configInfo.config);
+            AsyncConfigBus.updateFile(updateContent);
+            AsyncConfigBus.state = configInfo.config;
+        } else {
+            // init config
+            await client.connection.collection(AsyncConfigBus.moduleConfig.store.collection).insertOne({
+                flag: AsyncConfigBus.moduleConfig.store.flag,
+                config: initConfig,
+            });
+            AsyncConfigBus.state = initConfig;
+        }
+    }
+
+    static async initLocal(client, initConfig) {
+        AsyncConfigBus.state = initConfig;
     }
 
     /* operations */
@@ -158,48 +149,30 @@ export class AsyncConfigBus {
     *
     * full volume update
     * */
-    static updateRedis(client, doc) {
-        return new Promise(async (resolve, reject) => {
-            try {
-                if (doc) {
-                    const prefix = client.options.keyPrefix;
-                    const configData = { ...AsyncConfigBus.state, ...doc };
-                    client.set(`${prefix}AsyncConfig`, JSON.stringify(configData));
-                    AsyncConfigBus.updateFile(stringify(configData));
-                    AsyncConfigBus.state = configData;
-                }
-                resolve(AsyncConfigBus.state);
-            } catch (e) {
-                resolve(null);
-            }
-        });
+    static async updateRedis(client, doc) {
+        if (doc) {
+            const prefix = client.options.keyPrefix;
+            const configData = { ...AsyncConfigBus.state, ...doc };
+            client.set(`${prefix}AsyncConfig`, JSON.stringify(configData));
+            AsyncConfigBus.updateFile(stringify(configData));
+            AsyncConfigBus.state = configData;
+        }
+        return AsyncConfigBus.state;
     }
 
-    static updateMongodb(client, doc) {
-        return new Promise(async (resolve, reject) => {
-            if (doc) {
-                const updateData: any = {...AsyncConfigBus.state, ...doc};
-                // tslint:disable-next-line:max-line-length
-                const configInfo = await client.connection.collection(AsyncConfigBus.moduleConfig.store.collection).findOneAndUpdate({flag: AsyncConfigBus.moduleConfig.store.flag}, { $set: { config: updateData } });
-                AsyncConfigBus.updateFile(stringify(updateData));
-                AsyncConfigBus.state = updateData;
-                resolve(AsyncConfigBus.state);
-            } else {
-                resolve(AsyncConfigBus.state);
-            }
-        });
+    static async updateMongodb(client, doc) {
+        const updateData: any = {...AsyncConfigBus.state, ...doc};
+        // tslint:disable-next-line:max-line-length
+        const configInfo = await client.connection.collection(AsyncConfigBus.moduleConfig.store.collection).findOneAndUpdate({flag: AsyncConfigBus.moduleConfig.store.flag}, { $set: { config: updateData } });
+        AsyncConfigBus.updateFile(stringify(updateData));
+        AsyncConfigBus.state = updateData;
+        return AsyncConfigBus.state;
     }
 
-    static updateLocal(client, doc) {
-        return new Promise((resolve, reject) => {
-            if (doc) {
-                AsyncConfigBus.state = { ...AsyncConfigBus.state, ...doc };
-                AsyncConfigBus.updateFile(stringify(AsyncConfigBus.state));
-                resolve(AsyncConfigBus.state);
-            } else {
-                resolve(AsyncConfigBus.state);
-            }
-        });
+    static async updateLocal(client, doc) {
+        AsyncConfigBus.state = { ...AsyncConfigBus.state, ...doc };
+        AsyncConfigBus.updateFile(stringify(AsyncConfigBus.state));
+        return AsyncConfigBus.state;
     }
 
     static updateConfig(doc): any {
