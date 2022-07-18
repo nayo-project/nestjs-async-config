@@ -6,13 +6,10 @@ export const chooseStoreConnection = (config: Setting | any) => {
     switch (config.store.type) {
         case 'local':
             return localConnection;
-            break;
         case 'redis':
             return redisConnection(config);
-            break;
         case 'mongodb':
             return mongodbConnection(config);
-            break;
         default:
             throw new Error('store type is not exits');
     }

@@ -1,6 +1,6 @@
 {
   "name": "nestjs-async-config",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The async config module based on RESTful API, you can real time update your system config",
   "author": "Terence.Sun",
   "main": "dist/index.js",
@@ -33,6 +33,7 @@
   "dependencies": {
     "@nestjs/core": "8.0.0",
     "@types/yaml": "1.2.0",
+    "app-root-path": "^3.0.0",
     "ioredis": "4.14.1",
     "mongoose": "6.0.12",
     "nestjs-validate": "0.5.7",
