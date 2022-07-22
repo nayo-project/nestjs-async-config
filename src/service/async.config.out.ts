@@ -6,6 +6,6 @@ import { DEFAULT } from './../default';
 export class Config {
 
     get(key: string) {
-        return AsyncConfigBus.getConfig(key);
+        return process.env[key] || AsyncConfigBus.getConfig(key);
     }
 }
