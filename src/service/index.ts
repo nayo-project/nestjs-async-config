@@ -1,8 +1,10 @@
 import { Controller, Param, Body, Put, Post, Delete, Get, Res, Req } from '@nestjs/common';
 import { Validate } from 'nestjs-validate';
+import { ApiTags } from '@nestjs/swagger';
 import { DEFAULT } from './../default';
 import { AsyncConfigService } from './async.config.service';
 
+@ApiTags('config')
 @Controller('config')
 export class AsyncConfigController {
 
