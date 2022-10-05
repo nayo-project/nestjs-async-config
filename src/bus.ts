@@ -6,6 +6,7 @@ import {DEFAULT} from './default';
 import {Setting} from './interface';
 import {chooseStoreConnection} from './store';
 import * as AppRootPath from 'app-root-path';
+import {differenceObject} from './utils';
 
 @Injectable()
 export class AsyncConfigBus {
@@ -56,6 +57,10 @@ export class AsyncConfigBus {
         // get store connection
         const client = await chooseStoreConnection(AsyncConfigBus.moduleConfig);
         AsyncConfigBus.connectionStore = client;
+        await AsyncConfigBus.initData(client, initConfig);
+    }
+
+    static async initData(client, initConfig) {
         switch (AsyncConfigBus.moduleConfig.store.type) {
             case 'local':
                 await AsyncConfigBus.initLocal(client, initConfig);
@@ -240,6 +245,38 @@ export class AsyncConfigBus {
     static getConfig(stateName: string): any {
         if (AsyncConfigBus.state[stateName]) {
             return AsyncConfigBus.state[stateName];
+        } else {
+            return null;
+        }
+    }
+
+    /*
+    * refresh the config state, if the config changed, the func will return the new config info
+    * however, the config is related to your storage, not the process.env,
+    * so, if you want to change the config in process.env, you should write the new envs by yourself
+    * */
+    static async refresh(): Promise<Record<any, any> | null> {
+        const oldConfig = Object.assign({}, AsyncConfigBus.state);
+        const moduleConfigFromYml = AsyncConfigBus.getConfigSetting();
+        AsyncConfigBus.moduleConfig = DEFAULT.DEFAULTSETTING(moduleConfigFromYml);
+        const rootFiles = [];
+        const rootEnvFiles = [];
+        if (existsSync(pathResolve(__dirname, AsyncConfigBus.envFilePath))) {
+            rootEnvFiles.push(AsyncConfigBus.envFilePath);
+        }
+        let initConfigContent = '';
+        let initConfig;
+        for (const configContent of rootEnvFiles) {
+            initConfigContent += readFileSync(pathResolve(__dirname, configContent), 'utf8');
+        }
+        initConfig = parse(initConfigContent);
+        if (initConfig == null) {
+            initConfig = {};
+        }
+        await AsyncConfigBus.initData(AsyncConfigBus.connectionStore, initConfig);
+        const diff = differenceObject(AsyncConfigBus.state, oldConfig);
+        if (Object.keys(diff).length !== 0) {
+            return Object.assign({}, AsyncConfigBus.state);
         } else {
             return null;
         }
