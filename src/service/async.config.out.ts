@@ -8,4 +8,8 @@ export class Config {
     get(key: string) {
         return process.env[key] || AsyncConfigBus.getConfig(key);
     }
+
+    async refresh() {
+        return await AsyncConfigBus.refresh();
+    }
 }
